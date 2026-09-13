@@ -1,22 +1,22 @@
 import type { TaskProps } from "./types";
 
-export const tasks: TaskProps = [
+export const tasks: TaskProps[] = [
   {
-    id: 1,
-    tag: "Urgent",
+    _id: "1",
+    tag: "urgent",
     title: "FinTech Website Update",
     description: "Revamp the user financial data.",
   },
   {
-    id: 2,
-    tag: "Important",
+    _id: "2",
+    tag: "important",
     title: "Taskduty Update",
     description: "Revamp the user financial data.",
   },
   {
-    id: 3,
-    tag: "Urgent",
+    _id: "3",
+    tag: "urgent",
     title: "Online Class Update",
     description: "Revamp the user financial data.",
   },
-] as const
+];

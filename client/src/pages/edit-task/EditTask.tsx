@@ -12,81 +12,82 @@ import type { TaskProps } from '../../libs/types'
 import SuspenseUi from '../../componets/SuspenseUi';
 
 export default function EditTask() {
-  const { taskId } = useParams()
-  const [singleTask,setSingleTask] = useState<TaskProps | null> (null)
+  const { taskId } = useParams();
+  const [singleTask, setSingleTask] = useState<TaskProps | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const { accessToken } = useAuth();
-  const navigate = useNavigate()
-
-  console.log(singleTask)
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getTask = async () => {
-      if (!accessToken) return;
+      if (!taskId || !accessToken) {
+        setError("Task details are unavailable right now.");
+        return;
+      }
 
       setLoading(true);
       setError(null);
 
       try {
-        const res = await getSingleTaskApi(taskId as string, accessToken);
+        const res = await getSingleTaskApi(taskId, accessToken);
 
         if (res.status === 200) {
-          setSingleTask(res.data.task)
+          setSingleTask(res.data.task);
         }
-
       } catch (err) {
-        console.error("Error loading task:", err);
         const message = axios.isAxiosError(err)
-          ? err.response?.data?.message ?? err.message ?? 'Failed to load task. Please try again.'
-          : 'Failed to load task. Please try again.';
+          ? (typeof err.response?.data?.message === "string"
+              ? err.response.data.message
+              : "Something went wrong while loading the task.")
+          : "Something went wrong while loading the task.";
+
         setError(message);
-        toast.error(message)
+        toast.error(message);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     };
 
     getTask();
   }, [accessToken, taskId]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, 
-  setValue,
-   } = useForm<CreateTaskType>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<CreateTaskType>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
-      title: singleTask?.title || "",
-      description: singleTask?.description || "",
-      tag: singleTask?.tag || "Urgent"
+      title: "",
+      description: "",
+      tag: "urgent"
     }
   });
 
-  console.log(singleTask)
-
   useEffect(() => {
-    if (singleTask) {
-      setValue("description", singleTask.description)
-      setValue("title", singleTask.title)
-      setValue("tag", singleTask.tag)
-      }
-    
-  }, [singleTask, setValue])
+    if (!singleTask) return;
 
+    setValue("description", singleTask.description);
+    setValue("title", singleTask.title);
+    setValue("tag", singleTask.tag === "important" ? "important" : "urgent");
+  }, [singleTask, setValue]);
 
   const onFormSubmit: SubmitHandler<CreateTaskType> = async (data) => {
+    if (!taskId || !accessToken) {
+      toast.error("You are not authorized to update this task.");
+      return;
+    }
+
     try {
-      const res = await updateTaskApi(taskId as string, data, accessToken);
+      const res = await updateTaskApi(taskId, data, accessToken);
       if (res.status === 200) {
         toast.success("Task updated successfully");
-            navigate("/my-tasks")
+        navigate("/my-tasks");
       }
     } catch (err) {
       const message = axios.isAxiosError(err)
-        ? err.response?.data?.message ?? 'Failed to update task'
-        : 'Failed to update task';
+        ? err.response?.data?.message ?? "Failed to update task"
+        : "Failed to update task";
       toast.error(message);
     }
-  }
+  };
 
 if (loading) {
     return <SuspenseUi />;
@@ -125,10 +126,10 @@ if (loading) {
 
           <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 mb-6">
             <legend className="fieldset-legend">Tag</legend>
-            <select className="select w-full" {...register("tag")}>
-              <option disabled>Pick a Tag</option>
-              <option value="Urgent">Urgent</option>
-              <option value="Important">Important</option>
+            <select className="select w-full" {...register("tag")} defaultValue="urgent">
+              <option value="" disabled>Pick a Tag</option>
+              <option value="urgent">Urgent</option>
+              <option value="important">Important</option>
             </select>
             {errors.tag && <p className="text-red-500 label">{errors.tag.message}</p>}
           </fieldset>

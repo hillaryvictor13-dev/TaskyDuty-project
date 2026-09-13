@@ -8,7 +8,7 @@ export const createTaskSchema = z.object({
         .min(10, { message: "Description must be at least 10 characters long" })
         .max(200, { message: "Description should not be greater than 200 characters" }),
     tag: z.enum(["Urgent", "Important", "urgent", "important"], {
-        errorMap: () => ({ message: "Tag is required" })
+        message: "Tag is required"
     }),
 });
 export type CreateTaskType = z.infer<typeof createTaskSchema>;
